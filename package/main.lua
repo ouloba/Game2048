@@ -1,6 +1,10 @@
 LXZDoFile("LXZHelper.lua");
 LXZDoFile("serial.lua");
 
+--记录分数文件
+local cfg = ILXZCoreCfg:new_local();
+cfg:load(LXZAPIGetWritePath().."game_info.cfg");
+
 local function create_number(name,number)
 	local root = HelperGetRoot();
 	local grids = root:GetLXZWindow("game:back grids")
@@ -76,6 +80,12 @@ end
 	 
 	 local bonus_w = root:GetLXZWindow("head:bonus:number");
 	HelperSetWindowText(bonus_w, tostring(0));
+	HelperSetWindowText(root:GetLXZWindow("game over:bonus:bonus"), tostring(0));
+	
+	local maxcore=cfg:GetInt("maxcore");
+	HelperSetWindowText(root:GetLXZWindow("head:history:number"), tostring(maxcore));
+		
+	
  end
 	
 
@@ -126,85 +136,63 @@ local function merge(dst_col, dst_row, src_col, src_row)
 		local bonus = tonumber(HelperGetWindowText(bonus_w));
 		bonus = bonus+number;
 		HelperSetWindowText(bonus_w, tostring(bonus));
+		HelperSetWindowText(root:GetLXZWindow("game over:bonus:bonus"), tostring(bonus));
+		
+		local maxcore=cfg:GetInt("maxcore");
+		if bonus>maxcore then
+			cfg:SetInt("maxcore", -1, bonus);
+		end
 		
 		return true;
 end
 
-
-local function tighten_move_number(src_col, src_row,flag)
+local function tighten_move_line(v,direction)
 	local root = HelperGetRoot();
 	local main = root:GetLXZWindow("game:main");
 	local grids = root:GetLXZWindow("game:back grids")
-		
-	local wnd = main:GetChild(src_col.."x"..src_row);
-	if wnd == nil then
-		return;
-	end
 	
-	--row
-		if flag=="left" then
-			for col=src_col-1,1,-1 do
-				if main:GetChild(col.."x"..src_row)~=nil then
-					break;
-				else
-					local pt = grids:GetChild(col.."x"..src_row):GetHotPos(true);
-					wnd:SetName(col.."x"..src_row); --reset name.
-					wnd:SetHotPos(pt, true); --reset position
-				end
+	local count=0;
+	if direction=="left" then
+		for col=1,4,1 do
+			local w = main:GetChild(col.."x"..v);
+			if w then
+				count=count+1;				
+				local pt = grids:GetChild(count.."x"..v):GetHotPos(true);
+				w:SetName(count.."x"..v); --reset name.
+				w:SetHotPos(pt, true); --reset position
 			end
-		elseif flag=="right" then
-			for col=src_col+1,4,1 do
-				if main:GetChild(col.."x"..src_row)~=nil then
-					break;
-				else
-					local pt = grids:GetChild(col.."x"..src_row):GetHotPos(true);
-					wnd:SetName(col.."x"..src_row); --reset name.
-					wnd:SetHotPos(pt, true); --reset position
-				end
+		end
+	elseif direction=="right" then
+		for col=4,1,-1 do
+			local w = main:GetChild(col.."x"..v);
+			if w then						
+				local pt = grids:GetChild((4-count).."x"..v):GetHotPos(true);
+				w:SetName((4-count).."x"..v); --reset name.
+				w:SetHotPos(pt, true); --reset position
+				count=count+1;		
 			end
-		elseif flag=="top" then
-			for row=src_row-1,1,-1 do
-				if main:GetChild(src_col.."x"..row)~=nil then
-					break;
-				else
-					local pt = grids:GetChild(src_col.."x"..row):GetHotPos(true);
-					wnd:SetName(src_col.."x"..row); --reset name.
-					wnd:SetHotPos(pt, true); --reset position
-				end
+		end
+	elseif direction=="top" then
+		for row=1,4,1 do
+			local w = main:GetChild(v.."x"..row);
+			if w then
+				count=count+1;				
+				local pt = grids:GetChild(v.."x"..count):GetHotPos(true);
+				w:SetName(v.."x"..count); --reset name.
+				w:SetHotPos(pt, true); --reset position
 			end
-		else
-			for row=src_row+1,4,1 do
-				if main:GetChild(src_col.."x"..row)~=nil then
-					break;
-				else
-					local pt = grids:GetChild(src_col.."x"..row):GetHotPos(true);
-					wnd:SetName(src_col.."x"..row); --reset name.
-					wnd:SetHotPos(pt, true); --reset position
-				end
+		end
+	elseif direction=="bottom" then
+		for row=4,1,-1 do
+			local w = main:GetChild(v.."x"..row);
+			if w then						
+				local pt = grids:GetChild(v.."x"..(4-count)):GetHotPos(true);
+				w:SetName(v.."x"..(4-count)); --reset name.
+				w:SetHotPos(pt, true); --reset position
+				count=count+1;		
 			end
-		end	
-	
-end
-
-
-local function tighten_move_line(v,flag)
-	if flag=="left" then
-		for i=1,4,1 do
-			tighten_move_number(i,v,flag);
 		end
-	elseif flag=="right" then
-		for i=4,1,-1 do
-			tighten_move_number(i,v,flag);
-		end
-	elseif flag=="top" then
-		for i=1,4,1 do
-			tighten_move_number(v,i,flag);
-		end
-	else
-		for i=4,1,-1 do
-			tighten_move_number(v,i,flag);
-		end
-	end
+	end	
 end
 
 --滑动融合	
@@ -365,16 +353,24 @@ local function OnMainMouseMove(window, msg, sender)
 	if is_game_over() then
 		local root = HelperGetRoot();
 		root:GetLXZWindow("game over"):Show();
+		if cfg then
+			cfg:save(LXZAPIGetWritePath().."game_info.cfg");
+		end
 	end
 	
 end
 
+--加载完成触发事件
 local function OnLoad(window, msg, sender)
 	local root=HelperGetRoot();
 	root:GetLXZWindow("game over"):Hide();
-	root:GetLXZWindow("start"):Show();
+	root:GetLXZWindow("start"):Show();		
+	
+	local maxcore=cfg:GetInt("maxcore");
+	HelperSetWindowText(root:GetLXZWindow("head:history:number"), tostring(maxcore));
 end
 
+--事件绑定
 local event_callback = {}
 event_callback ["OnStart"] = OnStart;
 event_callback ["OnLoad"] = OnLoad;
@@ -382,7 +378,7 @@ event_callback ["OnUpdate"] = OnUpdate;
 event_callback ["OnMainMouseMove"] = OnMainMouseMove;
 event_callback ["OnMainClickDown"] = OnMainClickDown;
 
-
+--消息派发接口
 function main_dispacher(window, cmd, msg, sender)
 ---	LXZAPI_OutputDebugStr("cmd 1:"..cmd);
 	if(event_callback[cmd] ~= nil) then

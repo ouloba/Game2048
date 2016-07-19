@@ -21,3 +21,8 @@ _text.txt
 white.png.set
 RoundCircle.png.set
 back.png.set
+_text.txt
+white.png.set
+RoundCircle.png.set
+back.png.set
+like.png.set
