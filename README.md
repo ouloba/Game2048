@@ -1,3 +1,9 @@
-ÓÃlaeÍêÃÀÉ½Õ¯2048£¬½ö¹©ÑĞ¾¿.
-main.luaÎÄ¼ş300¶àĞĞ´úÂë
-binÄ¿Â¼ÖĞÓĞwindowÆ½Ì¨ÔËĞĞĞ§¹û
+ç”¨laeå®Œç¾å±±å¯¨2048ï¼Œä»…ä¾›ç ”ç©¶.
+main.luaæ–‡ä»¶300å¤šè¡Œä»£ç 
+binç›®å½•ä¸­æœ‰windowå¹³å°è¿è¡Œæ•ˆæœ
+
+screenshot
+![Screenshot](screentshot/31.png?raw=true)
+![Screenshot](screentshot/45.png?raw=true)
+
+ä½¿ç”¨laeæ‰“å¼€ç›¸åº”çš„uiæ–‡ä»¶å³å¯ç¼–è¾‘
